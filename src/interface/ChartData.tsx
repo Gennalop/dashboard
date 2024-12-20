@@ -5,3 +5,4 @@ export default interface ChartData {
     humidity: number[];
     cloudiness: number[];
 }
+
