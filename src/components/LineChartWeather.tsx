@@ -1,19 +1,31 @@
 import Paper from '@mui/material/Paper';
 import { LineChart } from '@mui/x-charts/LineChart';
+import ChartData from '../interface/ChartData';
+import { useEffect, useState } from 'react';
 
-const uData = [4000, 3000, 2000, 2780, 1890, 2390, 3490];
-const pData = [2400, 1398, 9800, 3908, 4800, 3800, 4300];
-const xLabels = [
-    'Page A',
-    'Page B',
-    'Page C',
-    'Page D',
-    'Page E',
-    'Page F',
-    'Page G',
-];
+interface LineChartWeatherProps {
+    chartData: ChartData | null;
+}
 
-export default function LineChartWeather() {
+export default function LineChartWeather({ chartData }: LineChartWeatherProps) {
+
+    const [precipitation, setPrecipitation] = useState<number[]>([]);
+    const [temperature, setTemperature] = useState<number[]>([]);
+    const [humidity, setHumidity] = useState<number[]>([]);
+    const [cloudiness, setCloudiness] = useState<number[]>([]);
+    const [xDays, setXDays] = useState<string[]>([]);
+
+    // Hook: useEffect para actualizar los datos cuando llegan
+    useEffect(() => {
+        if (chartData) {
+            setPrecipitation(chartData.precipitation);
+            setTemperature(chartData.temperature);
+            setHumidity(chartData.humidity);
+            setCloudiness(chartData.cloudiness);
+            setXDays(chartData.xDays);
+        }
+    }, [chartData]);
+
     return (
         <Paper
             sx={{
@@ -24,15 +36,17 @@ export default function LineChartWeather() {
         >
 
             {/* Componente para un gráfico de líneas */}
-            <LineChart
-                width={400}
-                height={250}
-                series={[
-                    { data: pData, label: 'pv' },
-                    { data: uData, label: 'uv' },
-                ]}
-                xAxis={[{ scaleType: 'point', data: xLabels }]}
-            />
+                <LineChart
+                    height={400}
+                    series={[
+                        { data: precipitation, label: 'Precipitación' },
+                        { data: temperature, label: 'Temperatura (°C)' },
+                        { data: humidity, label: 'Humedad (%)' },
+                        { data: cloudiness, label: 'Nubosidad (%)' },
+                    ]}
+                    xAxis={[{ scaleType: 'point', data: xDays }]}
+                />
+
         </Paper>
     );
 }

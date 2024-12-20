@@ -1,34 +1,36 @@
-//import { useState } from 'react'
-// Grid version 2
-import Grid from '@mui/material/Grid2'
-
-//import reactLogo from './assets/react.svg'
-//import viteLogo from '/vite.svg'
-import './App.css'
+import AppHeader from './components/AppHeader';
 import IndicatorWeather from './components/IndicatorWeather';
+import IndicatorSun from './components/IndicatorSun';
 import TableWeather from './components/TableWeather';
 import ControlWeather from './components/ControlWeather';
 import LineChartWeather from './components/LineChartWeather';
-
+import Grid from '@mui/material/Grid2'
 import Item from './interface/Item';
+import ChartData from './interface/ChartData';
+import './App.css'
 
 {/* Hooks */ }
 import { useEffect, useState } from 'react';
 
 interface Indicator {
   title?: String;
-  subtitle?: String;
   value?: String;
+  icon?: string;
+}
+
+interface IndicatorSunSetRise {
+  value_set?: string;
+  value_rise?: string;
 }
 
 function App() {
-  //const [count, setCount] = useState(0)
 
   {/* Variable de estado y función de actualización */ }
   let [indicators, setIndicators] = useState<Indicator[]>([])
   let [owm, setOWM] = useState(localStorage.getItem("openWeatherMap"))
-
   let [items, setItems] = useState<Item[]>([])
+  let [indicatorSun, setIndicatorSun] = useState<IndicatorSunSetRise | null>(null)
+  let [chartData, setChartData] = useState<ChartData | null>(null);
 
   {/* Hook: useEffect */ }
   useEffect(() => {
@@ -44,8 +46,8 @@ function App() {
       if (expiringTime === null || nowTime > parseInt(expiringTime)) {
 
         {/* Request */ }
-        let API_KEY = "OPENWEATHERMAP' API KEY"
-        let response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=4bafda797df7d9cf29524ef087c17936`)
+        let API_KEY = "4bafda797df7d9cf29524ef087c17936"
+        let response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=${API_KEY}`)
         let savedTextXML = await response.text();
 
         {/* Tiempo de expiración */ }
@@ -74,34 +76,54 @@ function App() {
         const xml = parser.parseFromString(savedTextXML, "application/xml");
 
         {/* Arreglo para agregar los resultados */ }
-
         let dataToIndicators: Indicator[] = new Array<Indicator>();
         let dataToItems: Item[] = new Array<Item>();
+        let datoToIndicatorSun: IndicatorSunSetRise = {};
+        let dataToCharData: ChartData = {
+          xDays: [],
+          precipitation: [],
+          temperature: [],
+          humidity: [],
+          cloudiness: [],
+        };
 
         {/* 
           Análisis, extracción y almacenamiento del contenido del XML 
           en el arreglo de resultados
       */}
 
-        let name = xml.getElementsByTagName("name")[0].innerHTML || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "City", "value": name })
+        //let name = xml.getElementsByTagName("name")[0].innerHTML || ""
+        //dataToIndicators.push({ "title": "Location", "subtitle": "City", "value": name })
 
         let location = xml.getElementsByTagName("location")[1]
-
         let latitude = location.getAttribute("latitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Latitude", "value": latitude })
-
+        dataToIndicators.push({ "title": "Latitud", "value": latitude, "icon": "latitud.png" })
         let longitude = location.getAttribute("longitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Longitude", "value": longitude })
+        dataToIndicators.push({ "title": "Longitud", "value": longitude, "icon": "longitud.png" })
 
-        let altitude = location.getAttribute("altitude") || ""
-        dataToIndicators.push({ "title": "Location", "subtitle": "Altitude", "value": altitude })
+        let sunData = xml.getElementsByTagName("sun")[0];
+        let sunrise = sunData.getAttribute("rise") || "";
+        let sunset = sunData.getAttribute("set") || "";
+        datoToIndicatorSun = { "value_set": sunset, "value_rise": sunrise };
+
+        const dailyData: Record<string, {
+          precipitation: number[];
+          humidity: number[];
+          temperature: number[];
+          cloudiness: number[];
+        }> = {};
 
         let times = xml.getElementsByTagName("time");
-        for (let i = 0; i < Math.min(times.length, 6); i++) {
+        for (let i = 0; i < times.length; i++) {
           const time = times[i];
-          const dateStart = time.getAttribute("from")?.split("T")[1] || "N/A";
-          const dateEnd = time.getAttribute("to")?.split("T")[1]  || "N/A";
+          const from = time.getAttribute('from')?.split('T') || "N/A";
+          const date = from[0];
+          if (date && !dailyData[date]) {
+            dailyData[date] = { precipitation: [], humidity: [], temperature: [], cloudiness: [] };
+          }
+          const dateStart = from[1];
+          const dateEnd = time.getAttribute("to")?.split("T")[1] || "N/A";
+          const temperature = time.querySelector('temperature')?.getAttribute('value');
           const precipitation = time.querySelector("precipitation")?.getAttribute("probability") || "N/A";
           const humidity = time.querySelector("humidity")?.getAttribute("value") || "N/A";
           const clouds = time.querySelector("clouds")?.getAttribute("all") || "N/A";
@@ -113,11 +135,26 @@ function App() {
             clouds,
           };
           dataToItems.push(item_i);
+          dailyData[date].precipitation.push(precipitation ? parseFloat(precipitation) * 100 : 0);
+          dailyData[date].humidity.push(humidity ? parseFloat(humidity) : 0);
+          dailyData[date].temperature.push(temperature ? parseFloat(temperature) - 273.15 : 0); // Convert Kelvin to Celsius
+          dailyData[date].cloudiness.push(clouds ? parseFloat(clouds) : 0);
         }
-        //console.log(dataToIndicators)
+
+        for (const [date, data] of Object.entries(dailyData)) {
+          dataToCharData.xDays.push(new Date(date).toLocaleDateString()); // Format as DD/MM
+          dataToCharData.precipitation.push(data.precipitation.reduce((a, b) => a + b, 0) / data.precipitation.length);
+          dataToCharData.humidity.push(data.humidity.reduce((a, b) => a + b, 0) / data.humidity.length);
+          dataToCharData.temperature.push(data.temperature.reduce((a, b) => a + b, 0) / data.temperature.length);
+          dataToCharData.cloudiness.push(data.cloudiness.reduce((a, b) => a + b, 0) / data.cloudiness.length);
+        }
+
         {/* Modificación de la variable de estado mediante la función de actualización */ }
         setIndicators(dataToIndicators)
-        setItems(dataToItems);
+        setItems(dataToItems)
+        setIndicatorSun(datoToIndicatorSun);
+        setChartData(dataToCharData);
+
       }
 
     }
@@ -126,60 +163,60 @@ function App() {
   }, [owm])
 
   let renderIndicators = () => {
-    return indicators
-      .map(
-        (indicator, idx) => (
-          <Grid key={idx} size={{ xs: 12, xl: 3 }}>
+    return (
+      <Grid container spacing={2}
+        sx={{
+          width: '100%',
+          justifyContent: 'center', // Centra el contenido
+        }}>
+        {indicators.map((indicator, idx) => (
+          <Grid key={idx} size={{ xs: 12, xl: 4 }}>
             <IndicatorWeather
               title={indicator["title"]}
-              subtitle={indicator["subtitle"]}
-              value={indicator["value"]} />
+              value={indicator["value"]}
+              icon={indicator["icon"]} />
           </Grid>
-        )
-      )
+        ))}
+        {indicatorSun && (
+          <Grid size={{ xs: 12, xl: 4 }}>
+            <IndicatorSun
+              value_set={indicatorSun["value_set"]}
+              value_rise={indicatorSun["value_rise"]}
+            />
+          </Grid>
+        )}
+      </Grid>
+    )
   }
 
   {/* JSX */ }
   return (
-    <Grid container spacing={5}>
+    <div className="App">
+      <AppHeader />
 
-      {/* Indicadores */}
-      {/*<Grid size={{ xs: 12, xl: 3 }}>
-        <IndicatorWeather title={'Indicator 1'} subtitle={'Unidad 1'} value={"1.23"} />
-      </Grid>
+      <Grid container spacing={5}>
 
-      <Grid size={{ xs: 12, xl: 3 }}>
-        <IndicatorWeather title={'Indicator 2'} subtitle={'Unidad 2'} value={"3.12"} />
-      </Grid>
+        {/* Indicadores */}
+        {renderIndicators()}
 
-      <Grid size={{ xs: 12, xl: 3 }}>
-        <IndicatorWeather title={'Indicator 3'} subtitle={'Unidad 3'} value={"2.31"} />
-      </Grid>
-
-      <Grid size={{ xs: 12, xl: 3 }}>
-        <IndicatorWeather title={'Indicator 4'} subtitle={'Unidad 4'} value={"3.21"} />
-      </Grid>*/}
-      {renderIndicators()}
-
-      {/* Tabla */}
-      <Grid size={{ xs: 12, xl: 8 }}>
-        {/* Grid Anidado */}
-        <Grid container spacing={2}>
+        {/* Grafico */}
+        <Grid container spacing={2} sx={{
+          width: '100%',
+          justifyContent: 'center',
+        }}>
           <Grid size={{ xs: 12, xl: 3 }}>
             <ControlWeather />
           </Grid>
           <Grid size={{ xs: 12, xl: 9 }}>
-            <TableWeather itemsIn={ items }/>
+            <LineChartWeather chartData={chartData} />
           </Grid>
         </Grid>
-      </Grid>
 
-      {/* Gráfico */}
-      <Grid size={{ xs: 12, xl: 4 }}>
-        <LineChartWeather />
-      </Grid>
+        {/* Tabla */}
+        <TableWeather itemsIn={items} />
 
-    </Grid>
+      </Grid>
+    </div>
   )
 }
 

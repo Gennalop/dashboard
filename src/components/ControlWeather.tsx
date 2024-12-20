@@ -2,7 +2,6 @@
 import { useState, useRef } from 'react';
 
 {/* Componentes MUI */ }
-
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
@@ -24,9 +23,11 @@ export default function ControlWeather() {
 
     {/* Arreglo de objetos */ }
     let items = [
+        { "name": "Todos", "description": "" },
         { "name": "Precipitación", "description": "Cantidad de agua que cae sobre una superficie en un período específico." },
         { "name": "Humedad", "description": "Cantidad de vapor de agua presente en el aire, generalmente expresada como un porcentaje." },
-        { "name": "Nubosidad", "description": "Grado de cobertura del cielo por nubes, afectando la visibilidad y la cantidad de luz solar recibida." }
+        { "name": "Nubosidad", "description": "Grado de cobertura del cielo por nubes, afectando la visibilidad y la cantidad de luz solar recibida." },
+        { "name": "Temperatura", "description": "Medida de la cantidad de calor en la atmósfera, expresada en grados Celsius."}
     ]
 
     {/* Arreglo de elementos JSX */ }
