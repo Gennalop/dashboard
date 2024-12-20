@@ -5,48 +5,54 @@ import { useEffect, useState } from 'react';
 
 interface LineChartWeatherProps {
     chartData: ChartData | null;
+    selectedVariable: number;
 }
 
-export default function LineChartWeather({ chartData }: LineChartWeatherProps) {
+export default function LineChartWeather({ chartData, selectedVariable }: LineChartWeatherProps) {
+    const [dataToShow, setDataToShow] = useState<{ data: number[]; label: string }[]>([]);
 
-    const [precipitation, setPrecipitation] = useState<number[]>([]);
-    const [temperature, setTemperature] = useState<number[]>([]);
-    const [humidity, setHumidity] = useState<number[]>([]);
-    const [cloudiness, setCloudiness] = useState<number[]>([]);
-    const [xDays, setXDays] = useState<string[]>([]);
+    const items = [
+        { name: "Todos", key: "all" },
+        { name: "Precipitación", key: "precipitation" },
+        { name: "Temperatura (°C)", key: "temperature" },
+        { name: "Humedad (%)", key: "humidity" },
+        { name: "Nubosidad (%)", key: "cloudiness" }
+    ];
 
-    // Hook: useEffect para actualizar los datos cuando llegan
     useEffect(() => {
         if (chartData) {
-            setPrecipitation(chartData.precipitation);
-            setTemperature(chartData.temperature);
-            setHumidity(chartData.humidity);
-            setCloudiness(chartData.cloudiness);
-            setXDays(chartData.xDays);
+            if (selectedVariable === -1 || selectedVariable === 0) {
+                // Mostrar todas las variables si no hay selección
+                setDataToShow([
+                    { data: chartData.precipitation, label: "Precipitación" },
+                    { data: chartData.temperature, label: "Temperatura (°C)" },
+                    { data: chartData.humidity, label: "Humedad (%)" },
+                    { data: chartData.cloudiness, label: "Nubosidad (%)" }
+                ]);
+            } else {
+                // Mostrar solo la variable seleccionada
+                const selectedItem = items[selectedVariable];
+                if (selectedItem) {
+                    const variableData = chartData[selectedItem.key as keyof ChartData];
+
+                    // Verificar que el dato sea un array de números
+                    if (Array.isArray(variableData) && typeof variableData[0] === 'number') {
+                        setDataToShow([{ data: variableData as number[], label: selectedItem.name }]);
+                    } else {
+                        setDataToShow([]);
+                    }
+                }
+            }
         }
-    }, [chartData]);
+    }, [selectedVariable, chartData]);
 
     return (
-        <Paper
-            sx={{
-                p: 2,
-                display: 'flex',
-                flexDirection: 'column'
-            }}
-        >
-
-            {/* Componente para un gráfico de líneas */}
-                <LineChart
-                    height={400}
-                    series={[
-                        { data: precipitation, label: 'Precipitación' },
-                        { data: temperature, label: 'Temperatura (°C)' },
-                        { data: humidity, label: 'Humedad (%)' },
-                        { data: cloudiness, label: 'Nubosidad (%)' },
-                    ]}
-                    xAxis={[{ scaleType: 'point', data: xDays }]}
-                />
-
+        <Paper sx={{ p: 2, display: 'flex', flexDirection: 'column' }}>
+            <LineChart
+                height={400}
+                series={dataToShow}
+                xAxis={[{ scaleType: 'point', data: chartData?.xDays || [] }]}
+            />
         </Paper>
     );
 }

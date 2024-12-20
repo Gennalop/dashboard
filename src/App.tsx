@@ -31,6 +31,7 @@ function App() {
   let [items, setItems] = useState<Item[]>([])
   let [indicatorSun, setIndicatorSun] = useState<IndicatorSunSetRise | null>(null)
   let [chartData, setChartData] = useState<ChartData | null>(null);
+  let [selectedVariable, setSelectedVariable] = useState<number>(-1);
 
   {/* Hook: useEffect */ }
   useEffect(() => {
@@ -162,6 +163,10 @@ function App() {
     request();
   }, [owm])
 
+  let handleVariableChange = (selectedIdx: number) => {
+    setSelectedVariable(selectedIdx);
+  };
+
   let renderIndicators = () => {
     return (
       <Grid container spacing={2}
@@ -205,10 +210,12 @@ function App() {
           justifyContent: 'center',
         }}>
           <Grid size={{ xs: 12, xl: 3 }}>
-            <ControlWeather />
+            <ControlWeather onVariableChange={handleVariableChange} />
           </Grid>
           <Grid size={{ xs: 12, xl: 9 }}>
-            <LineChartWeather chartData={chartData} />
+            {chartData && (
+              <LineChartWeather chartData={chartData} selectedVariable={selectedVariable} />
+            )}
           </Grid>
         </Grid>
 

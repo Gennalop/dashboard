@@ -13,7 +13,11 @@ import FormControl from '@mui/material/FormControl';
 {/* Interfaz SelectChangeEvent */ }
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 
-export default function ControlWeather() {
+interface ControlWeatherProps {
+    onVariableChange: (selectedIdx: number) => void;
+}
+
+export default function ControlWeather({ onVariableChange }: ControlWeatherProps) {
 
     {/* Constante de referencia a un elemento HTML */ }
     const descriptionRef = useRef<HTMLDivElement>(null);
@@ -25,9 +29,9 @@ export default function ControlWeather() {
     let items = [
         { "name": "Todos", "description": "" },
         { "name": "Precipitación", "description": "Cantidad de agua que cae sobre una superficie en un período específico." },
+        { "name": "Temperatura", "description": "Medida de la cantidad de calor en la atmósfera, expresada en grados Celsius." },
         { "name": "Humedad", "description": "Cantidad de vapor de agua presente en el aire, generalmente expresada como un porcentaje." },
-        { "name": "Nubosidad", "description": "Grado de cobertura del cielo por nubes, afectando la visibilidad y la cantidad de luz solar recibida." },
-        { "name": "Temperatura", "description": "Medida de la cantidad de calor en la atmósfera, expresada en grados Celsius."}
+        { "name": "Nubosidad", "description": "Grado de cobertura del cielo por nubes, afectando la visibilidad y la cantidad de luz solar recibida." }
     ]
 
     {/* Arreglo de elementos JSX */ }
@@ -39,7 +43,7 @@ export default function ControlWeather() {
         let idx = parseInt(event.target.value)
         //alert(idx);
         setSelected(idx);
-
+        onVariableChange(idx); // Actualiza el estado en App.tsx
         {/* Modificación de la referencia descriptionRef */ }
         if (descriptionRef.current !== null) {
             descriptionRef.current.innerHTML = (idx >= 0) ? items[idx]["description"] : ""
@@ -80,13 +84,6 @@ export default function ControlWeather() {
                 </FormControl>
 
             </Box>
-
-            {/* Use la variable de estado para renderizar del item seleccionado */}
-            {/*<Typography mt={2} component="p" color="text.secondary">
-                {
-                    (selected >= 0) ? items[selected]["description"] : ""
-                }
-            </Typography>*/}
 
             <Typography ref={descriptionRef} mt={2} component="p" color="text.secondary" />
 
