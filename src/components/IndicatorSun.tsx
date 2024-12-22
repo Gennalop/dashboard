@@ -1,6 +1,4 @@
 import { Typography, Paper, Box } from "@mui/material";
-//import Typography from '@mui/material/Typography';
-//import Paper from '@mui/material/Paper';
 
 interface Indicator {
     value_set?: string;
@@ -25,29 +23,32 @@ export default function IndicatorSun(config: Indicator) {
                     p: 2,
                     display: 'flex',
                     flexDirection: 'row',
-                    gap: 10,
+                    flexWrap: 'wrap',
+                    gap: 5,
                     justifyContent: 'center',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    minHeight: '100px',
+                    backgroundColor: '#292929',
                 }}
             >
                 <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center">
                     <Typography component="h2" variant="h6"
-                        color="primary" gutterBottom>
+                        color="#F2EFE9" gutterBottom>
                         Amanecer
                     </Typography>
-                    <Typography component="p" variant="h4" style={{ whiteSpace: 'nowrap' }}>
+                    <Typography component="p" variant="h4" color="#F2EFE9" style={{ whiteSpace: 'nowrap' }}>
                         {formatDate(config.value_rise)}
                     </Typography>
                 </Box>
-
-                <img src='dashboard/img/sun.png' alt="Sun_rise_set" style={{ width: 'auto', height: '100px' }} />
+                
+                <img src='/dashboard/img/sun.png' alt="sun" style={{ width: 'auto', height: '100px' }} />
 
                 <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center">
                     <Typography component="h2" variant="h6"
-                        color="primary" gutterBottom>
+                        color="#F2EFE9" gutterBottom>
                         Atardecer
                     </Typography>
-                    <Typography component="p" variant="h4" style={{ whiteSpace: 'nowrap' }}>
+                    <Typography component="p" variant="h4" color="#F2EFE9" style={{ whiteSpace: 'nowrap' }}>
                         {formatDate(config.value_set)}
                     </Typography>
                 </Box>
@@ -56,3 +57,5 @@ export default function IndicatorSun(config: Indicator) {
         </>
     )
 }
+
+

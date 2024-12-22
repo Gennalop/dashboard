@@ -2,12 +2,7 @@
 import { useState, useRef } from 'react';
 
 {/* Componentes MUI */ }
-import Paper from '@mui/material/Paper';
-import Typography from '@mui/material/Typography';
-import Box from '@mui/material/Box';
-import InputLabel from '@mui/material/InputLabel';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
+import {Paper, Typography, Box, MenuItem, FormControl} from '@mui/material';
 //import Select from '@mui/material/Select';
 
 {/* Interfaz SelectChangeEvent */ }
@@ -57,35 +52,62 @@ export default function ControlWeather({ onVariableChange }: ControlWeatherProps
             sx={{
                 p: 2,
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                backgroundColor: '#292929'
             }}
         >
 
-            <Typography mb={2} component="h3" variant="h6" color="primary">
+            <Typography mb={2} component="h3" variant="h6" color="#F2EFE9">
                 Variables Meteorológicas
             </Typography>
 
             <Box sx={{ minWidth: 120 }}>
 
                 <FormControl fullWidth>
-                    <InputLabel id="simple-select-label">Variables</InputLabel>
                     <Select
                         labelId="simple-select-label"
                         id="simple-select"
-                        label="Variables"
                         defaultValue='-1'
                         onChange={handleChange}
+                        sx={{
+                            '& .MuiSelect-select': {
+                                color: "#F2EFE9", // Color del texto del elemento seleccionado
+                            },
+                            '& .MuiOutlinedInput-notchedOutline': {
+                                borderColor: "#F2EFE9", // Color del borde de la caja
+                            },
+                            '&:hover .MuiOutlinedInput-notchedOutline': {
+                                borderColor: "#F2EFE9", // Color del borde al pasar el mouse
+                            },
+                            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                                borderColor: "#F2EFE9", // Color del borde al enfocarse
+                            },
+                            '& .MuiSelect-icon': {
+                                color: "#F2EFE9", // Color del ícono desplegable
+                            },
+                        }}
+                        MenuProps={{
+                            PaperProps: {
+                                sx: {
+                                    bgcolor: "#F2EFE9", // Fondo del menú desplegable
+                                    '& .MuiMenuItem-root.Mui-selected': {
+                                        backgroundColor: '#bbdefb', // Fondo del elemento seleccionado
+                                    },
+                                    '& .MuiMenuItem-root:hover': {
+                                        backgroundColor: '#90caf9', // Fondo de un elemento al pasar el mouse
+                                    },
+                                },
+                            },
+                        }}
                     >
                         <MenuItem key="-1" value="-1" disabled>Seleccione una variable</MenuItem>
-
                         {options}
-
                     </Select>
                 </FormControl>
 
             </Box>
 
-            <Typography ref={descriptionRef} mt={2} component="p" color="text.secondary" />
+            <Typography ref={descriptionRef} mt={2} component="p" color="#F2EFE9" />
 
         </Paper>
 

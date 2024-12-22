@@ -1,6 +1,7 @@
 import { Button, Typography, Box } from "@mui/material";
 import RefreshIcon from '@mui/icons-material/Refresh';
 import { useEffect, useState } from 'react';
+import '../App.css'
 
 function AppHeader() {
     const [currentTime, setCurrentTime] = useState(new Date());
@@ -54,9 +55,18 @@ function AppHeader() {
                     Actualizar
                 </Button>
             </Box>
-            <Box className="AppContent">
+            <Box className="AppHeaderInfo" display="flex" flexDirection='column' justifyContent="center" sx={{
+                backgroundImage: 'url(/dashboard/img/ph1.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                backgroundBlendMode: 'overlay',
+            }}>
                 <Typography sx={{ mt: 2 }}>
                     {formatDateTime(currentTime)}
+                </Typography>
+                <Typography component="p" variant="h1" color="#F2EFE9">
+                    Guayaquil
                 </Typography>
             </Box>
         </Box>
