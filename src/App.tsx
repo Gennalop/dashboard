@@ -28,7 +28,6 @@ interface IndicatorSunSetRise {
 
 function App() {
 
-  {/* Variable de estado y función de actualización */ }
   let [indicators, setIndicators] = useState<Indicator[]>([])
   let [owm, setOWM] = useState(localStorage.getItem("openWeatherMap"))
   let [items, setItems] = useState<Item[]>([])
@@ -38,7 +37,6 @@ function App() {
   let [selectedVariable, setSelectedVariable] = useState<number>(-1);
   let [selectedDay, setselectedDay] = useState<number>(0);
 
-  {/* Hook: useEffect */ }
   useEffect(() => {
   const request = async () => {
     const savedTextXML = getOrFetchWeatherData();
