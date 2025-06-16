@@ -216,7 +216,6 @@ function avg(arr: number[]): number {
     )
   }
 
-  {/* JSX */ }
   return (
     <div className="App">
       <AppHeader />
@@ -227,10 +226,8 @@ function avg(arr: number[]): number {
           Pronóstico del Tiempo por 5 días
         </Typography>
 
-        {/* Indicadores */}
         {renderIndicators()}
 
-        {/* Grafico */}
         <Grid container spacing={2} sx={{
           width: '100%',
           justifyContent: 'center',
@@ -262,7 +259,6 @@ function avg(arr: number[]): number {
 
         </Grid>
 
-        {/* Tabla */}
         <TableWeather itemsIn={items} selectedDay={days[selectedDay]}/>
 
       </Grid>
