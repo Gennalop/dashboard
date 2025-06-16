@@ -40,138 +40,149 @@ function App() {
 
   {/* Hook: useEffect */ }
   useEffect(() => {
-    let request = async () => {
-      {/* Referencia a las claves del LocalStorage: openWeatherMap y expiringTime */ }
-      let savedTextXML = localStorage.getItem("openWeatherMap") || "";
-      let expiringTime = localStorage.getItem("expiringTime");
+  const request = async () => {
+    const savedTextXML = getOrFetchWeatherData();
 
-      {/* Obtenga la estampa de tiempo actual */ }
-      let nowTime = (new Date()).getTime();
+    if (savedTextXML) {
+      const xml = parseXML(savedTextXML);
+      const locationData = extractLocationData(xml);
+      const sunData = extractSunData(xml);
+      const timeData = extractTimeData(xml);
 
-      {/* Verifique si es que no existe la clave expiringTime o si la estampa de tiempo actual supera el tiempo de expiración */ }
-      if (expiringTime === null || nowTime > parseInt(expiringTime)) {
+      setIndicators(locationData.indicators);
+      setItems(timeData.items);
+      setDays(timeData.days);
+      setIndicatorSun(sunData);
+      setChartData(timeData.chartData);
+    }
+  };
 
-        {/* Request */ }
-        let API_KEY = "4bafda797df7d9cf29524ef087c17936"
-        let response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=${API_KEY}`)
-        let savedTextXML = await response.text();
+  request();
+}, [owm]);
 
+  function getOrFetchWeatherData() {
+  const cachedXML = localStorage.getItem("openWeatherMap") || "";
+  const expiringTime = localStorage.getItem("expiringTime");
+  const nowTime = Date.now();
 
-        {/* Tiempo de expiración */ }
-        let hours = 0.01
-        let delay = hours * 3600000
-        let expiringTime = nowTime + delay
+  if (!expiringTime || nowTime > parseInt(expiringTime)) {
+    return fetchAndCacheWeatherData(nowTime);
+  }
 
-        {/* En el LocalStorage, almacene el texto en la clave openWeatherMap, estampa actual y estampa de tiempo de expiración */ }
-        localStorage.setItem("openWeatherMap", savedTextXML)
-        localStorage.setItem("expiringTime", expiringTime.toString())
-        localStorage.setItem("nowTime", nowTime.toString())
+  return cachedXML;
+}
 
-        {/* DateTime */ }
-        localStorage.setItem("expiringDateTime", new Date(expiringTime).toString())
-        localStorage.setItem("nowDateTime", new Date(nowTime).toString())
+async function fetchAndCacheWeatherData(nowTime: number) {
+  const API_KEY = "4bafda797df7d9cf29524ef087c17936";
+  const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=Guayaquil&mode=xml&appid=${API_KEY}`);
+  const xmlText = await response.text();
 
-        {/* Modificación de la variable de estado mediante la función de actualización */ }
-        setOWM(savedTextXML)
+  const hours = 0.01;
+  const delay = hours * 3600000;
+  const expiringTime = nowTime + delay;
 
-      }
+  localStorage.setItem("openWeatherMap", xmlText);
+  localStorage.setItem("expiringTime", expiringTime.toString());
+  localStorage.setItem("nowTime", nowTime.toString());
+  localStorage.setItem("expiringDateTime", new Date(expiringTime).toString());
+  localStorage.setItem("nowDateTime", new Date(nowTime).toString());
 
-      {/* Valide el procesamiento con el valor de savedTextXML */ }
-      if (savedTextXML) {
-        {/* XML Parser */ }
-        const parser = new DOMParser();
-        const xml = parser.parseFromString(savedTextXML, "application/xml");
+  setOWM(xmlText);
+  return xmlText;
+}
 
-        {/* Arreglo para agregar los resultados */ }
-        let daysData: String[] = new Array<String>();
-        let dataToIndicators: Indicator[] = new Array<Indicator>();
-        let dataToItems: Item[] = new Array<Item>();
-        let datoToIndicatorSun: IndicatorSunSetRise = {};
-        let dataToCharData: ChartData = {
-          xDays: [],
-          precipitation: [],
-          temperature: [],
-          humidity: [],
-          cloudiness: [],
-        };
+function parseXML(xmlString: string): Document {
+  const parser = new DOMParser();
+  return parser.parseFromString(xmlString, "application/xml");
+}
 
-        {/* 
-          Análisis, extracción y almacenamiento del contenido del XML 
-          en el arreglo de resultados
-        */}
+function extractLocationData(xml: Document) {
+  const location = xml.getElementsByTagName("location")[1];
+  const latitude = location.getAttribute("latitude") || "";
+  const longitude = location.getAttribute("longitude") || "";
 
-        //let name = xml.getElementsByTagName("name")[0].innerHTML || ""
-        //dataToIndicators.push({ "title": "Location", "subtitle": "City", "value": name })
+  const indicators: Indicator[] = [
+    { title: "Latitud", value: latitude, icon: "latitud.png" },
+    { title: "Longitud", value: longitude, icon: "longitud.png" },
+  ];
 
-        let location = xml.getElementsByTagName("location")[1]
-        let latitude = location.getAttribute("latitude") || ""
-        dataToIndicators.push({ "title": "Latitud", "value": latitude, "icon": "latitud.png" })
-        let longitude = location.getAttribute("longitude") || ""
-        dataToIndicators.push({ "title": "Longitud", "value": longitude, "icon": "longitud.png" })
+  return { indicators };
+}
 
-        let sunData = xml.getElementsByTagName("sun")[0];
-        let sunrise = sunData.getAttribute("rise") || "";
-        let sunset = sunData.getAttribute("set") || "";
-        datoToIndicatorSun = { "value_set": sunset, "value_rise": sunrise };
+function extractSunData(xml: Document): IndicatorSunSetRise {
+  const sunData = xml.getElementsByTagName("sun")[0];
+  return {
+    value_rise: sunData.getAttribute("rise") || "",
+    value_set: sunData.getAttribute("set") || "",
+  };
+}
 
-        const dailyData: Record<string, {
-          precipitation: number[];
-          humidity: number[];
-          temperature: number[];
-          cloudiness: number[];
-        }> = {};
+function extractTimeData(xml: Document) {
+  const times = xml.getElementsByTagName("time");
 
-        let times = xml.getElementsByTagName("time");
-        for (let i = 0; i < times.length; i++) {
-          const time = times[i];
-          const from = time.getAttribute('from')?.split('T') || "N/A";
-          const date = new Date(from[0]).toLocaleDateString(undefined, { day: '2-digit', month: '2-digit' });
-          if (date && !daysData.includes(date)) {
-            dailyData[date] = { precipitation: [], humidity: [], temperature: [], cloudiness: [] };
-            daysData.push(date);
-          }
-          const dateStart = from[1];
-          const dateEnd = time.getAttribute("to")?.split("T")[1] || "N/A";
-          const temperature = time.querySelector('temperature')?.getAttribute('value');
-          const precipitation = time.querySelector("precipitation")?.getAttribute("probability") || "N/A";
-          const humidity = time.querySelector("humidity")?.getAttribute("value") || "N/A";
-          const clouds = time.querySelector("clouds")?.getAttribute("all") || "N/A";
-          const item_i: Item = {
-            date,
-            dateStart,
-            dateEnd,
-            precipitation,
-            humidity,
-            clouds,
-          };
-          dataToItems.push(item_i);
-          dailyData[date].precipitation.push(precipitation ? parseFloat(precipitation) * 100 : 0); //*100?==============================
-          dailyData[date].humidity.push(humidity ? parseFloat(humidity) : 0);
-          dailyData[date].temperature.push(temperature ? parseFloat(temperature) - 273.15 : 0); // Kelvin a Celsius
-          dailyData[date].cloudiness.push(clouds ? parseFloat(clouds) : 0);
-        }
+  const daysData: string[] = [];
+  const dataToItems: Item[] = [];
+  const dataToChart: ChartData = {
+    xDays: [],
+    precipitation: [],
+    temperature: [],
+    humidity: [],
+    cloudiness: [],
+  };
 
-        for (const [date, data] of Object.entries(dailyData)) {
-          dataToCharData.xDays.push(date);
-          dataToCharData.precipitation.push(data.precipitation.reduce((a, b) => a + b, 0) / data.precipitation.length);
-          dataToCharData.humidity.push(data.humidity.reduce((a, b) => a + b, 0) / data.humidity.length);
-          dataToCharData.temperature.push(data.temperature.reduce((a, b) => a + b, 0) / data.temperature.length);
-          dataToCharData.cloudiness.push(data.cloudiness.reduce((a, b) => a + b, 0) / data.cloudiness.length);
-        }
+  const dailyData: Record<string, {
+    precipitation: number[];
+    humidity: number[];
+    temperature: number[];
+    cloudiness: number[];
+  }> = {};
 
-        {/* Modificación de la variable de estado mediante la función de actualización */ }
-        setDays(daysData)
-        setIndicators(dataToIndicators)
-        setItems(dataToItems)
-        setIndicatorSun(datoToIndicatorSun);
-        setChartData(dataToCharData);
+  for (let i = 0; i < times.length; i++) {
+    const time = times[i];
+    const from = time.getAttribute("from")?.split("T") || [];
+    const date = new Date(from[0]).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
 
-      }
-
+    if (date && !daysData.includes(date)) {
+      daysData.push(date);
+      dailyData[date] = { precipitation: [], humidity: [], temperature: [], cloudiness: [] };
     }
 
-    request();
-  }, [owm])
+    const item: Item = {
+      date,
+      dateStart: from[1],
+      dateEnd: time.getAttribute("to")?.split("T")[1] || "",
+      precipitation: time.querySelector("precipitation")?.getAttribute("probability") || "0",
+      humidity: time.querySelector("humidity")?.getAttribute("value") || "0",
+      clouds: time.querySelector("clouds")?.getAttribute("all") || "0",
+    };
+
+    dataToItems.push(item);
+
+    dailyData[date].precipitation.push(parseFloat(item.precipitation) * 100);
+    dailyData[date].humidity.push(parseFloat(item.humidity));
+    dailyData[date].temperature.push(parseFloat(time.querySelector("temperature")?.getAttribute("value") || "0") - 273.15);
+    dailyData[date].cloudiness.push(parseFloat(item.clouds));
+  }
+
+  for (const [date, data] of Object.entries(dailyData)) {
+    dataToChart.xDays.push(date);
+    dataToChart.precipitation.push(avg(data.precipitation));
+    dataToChart.humidity.push(avg(data.humidity));
+    dataToChart.temperature.push(avg(data.temperature));
+    dataToChart.cloudiness.push(avg(data.cloudiness));
+  }
+
+  return {
+    days: daysData,
+    items: dataToItems,
+    chartData: dataToChart,
+  };
+}
+
+function avg(arr: number[]): number {
+  return arr.reduce((a, b) => a + b, 0) / (arr.length || 1);
+}
+
 
   let handleVariableChange = (selectedIdx: number) => {
     setSelectedVariable(selectedIdx);
