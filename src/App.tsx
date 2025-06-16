@@ -12,7 +12,6 @@ import './App.css'
 
 import { Typography } from "@mui/material";
 
-{/* Hooks */ }
 import { useEffect, useState } from 'react';
 
 interface Indicator {
