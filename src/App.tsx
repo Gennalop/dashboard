@@ -15,8 +15,8 @@ import { Typography } from "@mui/material";
 import { useEffect, useState } from 'react';
 
 interface Indicator {
-  title?: String;
-  value?: String;
+  title?: string;
+  value?: string;
   icon?: string;
 }
 
