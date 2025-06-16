@@ -134,32 +134,31 @@ function extractTimeData(xml: Document) {
     cloudiness: number[];
   }> = {};
 
-  for (let i = 0; i < times.length; i++) {
-    const time = times[i];
-    const from = time.getAttribute("from")?.split("T") || [];
-    const date = new Date(from[0]).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
+  for (const time of times) {
+  const from = time.getAttribute("from")?.split("T") || [];
+  const date = new Date(from[0]).toLocaleDateString(undefined, { day: "2-digit", month: "2-digit" });
 
-    if (date && !daysData.includes(date)) {
-      daysData.push(date);
-      dailyData[date] = { precipitation: [], humidity: [], temperature: [], cloudiness: [] };
-    }
-
-    const item: Item = {
-      date,
-      dateStart: from[1],
-      dateEnd: time.getAttribute("to")?.split("T")[1] || "",
-      precipitation: time.querySelector("precipitation")?.getAttribute("probability") || "0",
-      humidity: time.querySelector("humidity")?.getAttribute("value") || "0",
-      clouds: time.querySelector("clouds")?.getAttribute("all") || "0",
-    };
-
-    dataToItems.push(item);
-
-    dailyData[date].precipitation.push(parseFloat(item.precipitation) * 100);
-    dailyData[date].humidity.push(parseFloat(item.humidity));
-    dailyData[date].temperature.push(parseFloat(time.querySelector("temperature")?.getAttribute("value") || "0") - 273.15);
-    dailyData[date].cloudiness.push(parseFloat(item.clouds));
+  if (date && !daysData.includes(date)) {
+    daysData.push(date);
+    dailyData[date] = { precipitation: [], humidity: [], temperature: [], cloudiness: [] };
   }
+
+  const item: Item = {
+    date,
+    dateStart: from[1],
+    dateEnd: time.getAttribute("to")?.split("T")[1] || "",
+    precipitation: time.querySelector("precipitation")?.getAttribute("probability") || "0",
+    humidity: time.querySelector("humidity")?.getAttribute("value") || "0",
+    clouds: time.querySelector("clouds")?.getAttribute("all") || "0",
+  };
+
+  dataToItems.push(item);
+  dailyData[date].precipitation.push(parseFloat(item.precipitation) * 100);
+  dailyData[date].humidity.push(parseFloat(item.humidity));
+  dailyData[date].temperature.push(parseFloat(time.querySelector("temperature")?.getAttribute("value") || "0") - 273.15);
+  dailyData[date].cloudiness.push(parseFloat(item.clouds));
+}
+
 
   for (const [date, data] of Object.entries(dailyData)) {
     dataToChart.xDays.push(date);
