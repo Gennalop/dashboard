@@ -32,7 +32,7 @@ function App() {
   let [items, setItems] = useState<Item[]>([])
   let [indicatorSun, setIndicatorSun] = useState<IndicatorSunSetRise | null>(null)
   let [chartData, setChartData] = useState<ChartData | null>(null);
-  let [days, setDays] = useState<String[]>([])
+  let [days, setDays] = useState<string[]>([])
   let [selectedVariable, setSelectedVariable] = useState<number>(-1);
   let [selectedDay, setselectedDay] = useState<number>(0);
 
